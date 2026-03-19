@@ -1,29 +1,40 @@
 const mongodb = require("../data/database");
 const ObjectId = require("mongodb").ObjectId;
 
-const getAllContacts = async (req, res) => {
+const getAllContacts = (req, res) => {
   // #swagger.tags = ['Contacts']
   // Implementation for getting all contacts
-  const result = await mongodb.getDatabase().db().collection("contacts").find();
-  result.toArray().then((contacts) => {
-    res.setHeader("Content-Type", "application/json");
-    res.status(200).json(contacts);
-  });
-};
-
-const getContactById = async (req, res) => {
-  // #swagger.tags = ['Contacts']
-  // Implementation for getting a contact by ID
-  const contactId = new ObjectId(req.params.id);
-  const result = await mongodb
+  mongodb
     .getDatabase()
     .db()
     .collection("contacts")
-    .find({ _id: contactId });
-  result.toArray().then((contacts) => {
-    res.setHeader("Content-Type", "application/json");
-    res.status(200).json(contacts[0]);
-  });
+    .find()
+    .toArray((err, contacts) => {
+      if (err) {
+        res.status(400).json({ message: err });
+      }
+      res.setHeader("Content-Type", "application/json");
+      res.status(200).json(contacts);
+    });
+};
+
+const getContactById = (req, res) => {
+  // #swagger.tags = ['Contacts']
+  // Implementation for getting a contact by ID
+  const contactId = new ObjectId(req.params.id);
+  mongodb
+    .getDatabase()
+    .db()
+    .collection("contacts")
+    .find({ _id: contactId })
+    .toArray((err, contacts) => {
+      if (err) {
+        res.status(400).json({ message: err });
+      } 
+        res.setHeader("Content-Type", "application/json");
+        res.status(200).json(contacts[0]);
+      
+    });
 };
 
 const createContact = async (req, res) => {
