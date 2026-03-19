@@ -1,44 +1,41 @@
 const mongodb = require("../data/database");
 const ObjectId = require("mongodb").ObjectId;
 
-const getAllContacts = (req, res) => {
-  // #swagger.tags = ['Contacts']
-  // Implementation for getting all contacts
-  mongodb
-    .getDatabase()
-    .db()
-    .collection("contacts")
-    .find()
-    .toArray((err, lists) => {
-      if (err) {
-        res.status(400).json({ message: err });
-      }
-      res.setHeader("Content-Type", "application/json");
-      res.status(200).json(lists);
-    });
+const getAllContacts = async (req, res) => {
+  try {
+    const db = mongodb.getDatabase();
+    const contacts = await db.db().collection("contacts").find().toArray();
+    res.setHeader("Content-Type", "application/json");
+    res.status(200).json(contacts);
+  } catch (err) {
+    console.error("getAllContacts error", err);
+    res.status(500).json({ message: err.message || err });
+  }
 };
 
-const getContactById = (req, res) => {
-  // #swagger.tags = ['Contacts']
-  // Implementation for getting a contact by ID
-    if (!ObjectId.isValid(req.params.id)) {
-      res.status(400).json("Must use a valid contact id to find a contact.");
-    }
+const getContactById = async (req, res) => {
+  if (!ObjectId.isValid(req.params.id)) {
+    return res
+      .status(400)
+      .json("Must use a valid contact id to find a contact.");
+  }
 
-  const contactId = new ObjectId(req.params.id);
-  mongodb
-    .getDatabase()
-    .db()
-    .collection("contacts")
-    .find({ _id: contactId })
-    .toArray((err, result) => {
-      if (err) {
-        res.status(400).json({ message: err });
-      } 
-        res.setHeader("Content-Type", "application/json");
-        res.status(200).json(result[0]);
-      
-    });
+  try {
+    const contactId = new ObjectId(req.params.id);
+    const db = mongodb.getDatabase();
+    const contact = await db
+      .db()
+      .collection("contacts")
+      .findOne({ _id: contactId });
+    if (!contact) {
+      return res.status(404).json({ message: "Contact not found." });
+    }
+    res.setHeader("Content-Type", "application/json");
+    res.status(200).json(contact);
+  } catch (err) {
+    console.error("getContactById error", err);
+    res.status(500).json({ message: err.message || err });
+  }
 };
 
 const createContact = async (req, res) => {
@@ -71,8 +68,8 @@ const updateContact = async (req, res) => {
   // #swagger.tags = ['Contacts']
   // Implementation for updating an existing contact
   if (!ObjectId.isValid(req.params.id)) {
-      res.status(400).json("Must use a valid contact id to update a contact.");
-    }
+    res.status(400).json("Must use a valid contact id to update a contact.");
+  }
 
   const contactId = new ObjectId(req.params.id);
   const contactData = {
@@ -98,7 +95,6 @@ const updateContact = async (req, res) => {
   }
 };
 
-
 const deleteContact = async (req, res) => {
   // #swagger.tags = ['Contacts']
   // Implementation for deleting a contact
@@ -121,7 +117,6 @@ const deleteContact = async (req, res) => {
       );
   }
 };
-
 
 module.exports = {
   getAllContacts,
